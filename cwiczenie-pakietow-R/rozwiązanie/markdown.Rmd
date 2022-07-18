@@ -1,0 +1,220 @@
+
+---
+title: "Raport_Pd2"
+author: "Jakub Mieczkowski"
+output: html_document
+---
+
+```{R, setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, warning = FALSE, message = FALSE)
+```
+
+Poniżej znajduje się raport do projeku drugiego. Poniżej przedstawiam załączone niezbędne biblioteki i ramki danych, następnie sprawdziłem kolejno zgodność każdego polecenia z SQL oraz porównałem czasy działania.
+
+```{r data_import, warning=FALSE}
+source("Mieczkowski_Jakub_313501_pd2.R")
+library(sqldf)
+library(readr)
+library(microbenchmark)
+library(data.table)
+library(dplyr)
+
+options(stringsAsFactors = FALSE)
+Tags <- read.csv("Tags.csv.gz")
+Comments <- read.csv("Comments.csv.gz")
+Badges <- read.csv("Badges.csv.gz")
+PostLinks <- read.csv("PostLinks.csv.gz")
+Posts <- read.csv("Posts.csv.gz")
+Users <- read.csv("Users.csv.gz")
+Votes <- read.csv("Votes.csv.gz")
+```
+
+## Zadanie 1
+### Tekst dla "laika"
+W zadaniu pierwszym chcemy znaleźć 10 najczęściej używanych tagów oraz wyświetlić w tabeli ich nazwę i liczbę wystąpień. W tym celu wybieramy kolumny *TagName* oraz *Count* z zakładki *Tags* a następnie sortujemy je malejąco po liczbie wystąpień.
+
+### Sprawdzenie równoważności wyników
+
+1. base R
+```{r all_equal_1.1, warning=FALSE}
+dplyr::all_equal(df_sqldf_1(Tags), df_base_1(Tags))
+```
+2. dplyr
+```{r all_equal_1.2, warning=FALSE}
+dplyr::all_equal(df_sqldf_1(Tags), df_dplyr_1(Tags))
+```
+3. data.table
+```{r all_equal_1.3, warning=FALSE}
+all_equal(df_sqldf_1(Tags), df_data_table_1(Tags))
+```
+
+
+### Porównanie czasu działania
+
+```{r microbenchmark_1, echo=FALSE}
+time_1 <- microbenchmark(
+  sql = df_sqldf_1(Tags),
+  base = df_base_1(Tags),
+  dplyr = df_dplyr_1(Tags),
+  dt = df_data_table_1(Tags))
+time_1
+```  
+
+  
+## Zadanie 2
+### Tekst dla "laika"
+W tym zadaniu głównym celem jesr wyliczenie średniego wyniku postów dodawanych przez danego użytkownika. Tworzymy tabelę w której znajduje się nazwa konta użytkownika, jego wiek, lokalizacja, średni wynik postóW i data dodania ostatniego posta. Ponadto użytkownicy których ananlizujemy muszą spełniać warunek Id nie róWne 1. Dane w tabeli ustawiamy wg średniego wyniku malejąco i wyświetlamy pierwsze 10 wierszy.
+
+### Sprawdzenie równoważności wyników
+
+1. base R
+```{r all_equal_2.1, warning=FALSE}
+all_equal(df_sqldf_2(Posts,Users), df_base_2(Posts,Users))
+```
+
+2. dplyr
+```{r all_equal_2.2, warning=FALSE}
+all_equal(df_sqldf_2(Posts,Users), df_dplyr_2(Posts,Users))
+```
+
+3. data.table
+```{r all_equal_2.3, warning=FALSE}
+all_equal(df_sqldf_2(Posts,Users), df_data_table_2(Posts,Users))
+```
+
+
+### Porównanie czasu działania
+
+```{r microbenchmark_2, echo=FALSE}
+time_2 <- microbenchmark(
+  sql = df_sqldf_2(Posts,Users),
+  base = df_base_2(Posts,Users),
+  dplyr = df_dplyr_2(Posts,Users),
+  dt = df_data_table_2(Posts,Users))
+time_2
+```  
+
+
+## Zadanie 3
+### Tekst dla "laika"
+W tym zadaniu należy policzyć ile dany użytkownik ma zapytań oraz ile odpoiedzi. Najpierw tworzę tabelę w której zliczam odpowiedzi, następnie analogiczną tabelę z pytaniami i łączę je ze sobą. Na koniec wybieram te wierszy w których liczba odpowiedzi jest większa niż liczba pytań i zestawiam je w tabeli malejąco (sortowanie po liczbie odpowiedzi).
+
+### Sprawdzenie równoważności wyników
+
+1. base R
+```{r all_equal_3.1, warning=FALSE}
+all_equal(df_sqldf_3(Users,Posts), df_base_3(Users,Posts))
+```
+
+2. dplyr
+```{r all_equal_3.2, warning=FALSE}
+all_equal(df_sqldf_3(Users,Posts), df_dplyr_3(Users,Posts))
+```
+
+3. data.table
+```{r all_equal_3.3, warning=FALSE}
+all_equal(df_sqldf_3(Users,Posts), df_data_table_3(Users,Posts))
+```
+
+
+### Porównanie czasu działania
+
+```{r microbenchmark_3, echo=FALSE}
+time_3.1 <- microbenchmark(
+  sql = df_sqldf_3(Users,Posts),
+  base = df_base_3(Users,Posts))
+time_3.2 <- microbenchmark(
+  dplyr = df_dplyr_3(Users,Posts),
+  dt = df_data_table_3(Users,Posts))
+time_3.1
+time_3.2
+```  
+
+
+## Zadanie 4
+### Tekst dla "laika"
+W tym zadaniu należy wyliczyć ile dany post ma wyświetleń, komentarzy oraz sumę punktów tych komentarzy (spełniając po drodze założenia o których zaraz napiszę). Najpierw muszę wyliczyć *CommentsTotalScore*, następnie te wartości dołączam do tabeli *Posts*. Następnie wybieram jedynie posty typu 1, sortuje malejąco po sumie punktów. W ostatecznej tabeli pokazuje 10 postów spełniających powyższe założenie oraz wypisuje jego liczbę komentarzy, wynik i liczbę wyświetleń. 
+
+### Sprawdzenie równoważności wyników
+
+1. base R
+```{r all_equal_4.1, warning=FALSE}
+all_equal(df_sqldf_4(Posts,Comments), df_base_4(Posts,Comments))
+```
+
+2. dplyr
+```{r all_equal_4.2, warning=FALSE}
+all_equal(df_sqldf_4(Posts,Comments), df_dplyr_4(Posts,Comments))
+```
+
+3. data.table
+```{r all_equal_4.3, warning=FALSE}
+all_equal(df_sqldf_4(Posts,Comments), df_data_table_4(Posts,Comments))
+```
+
+### Porównanie czasu działania
+
+```{r microbenchmark_4, echo=FALSE}
+time_4.1 <- microbenchmark(
+  sql = df_sqldf_4(Posts,Comments),
+  base = df_base_4(Posts,Comments))
+time_4.2 <- microbenchmark(
+  dplyr = df_dplyr_4(Posts,Comments),
+  dt = df_data_table_4(Posts,Comments))
+time_4.1
+time_4.2
+```  
+
+
+## Zadanie 5
+### Tekst dla "laika"
+W tym zadaniu tworzę tabelę w której tytułom postów przyporządkowuje: *MaxScore* czyli komentarz z najlepszym wynikiem oraz *AcceptedScore* czyli wynik pytania. Wyliczam różnicę między tymi wartościami i sortuje je malejąco.
+
+### Sprawdzenie równoważności wyników
+
+1. base R
+```{r all_equal_5.1, warning=FALSE}
+all_equal(df_sqldf_5(Posts), df_base_5(Posts))
+```
+
+2. dplyr
+```{r all_equal_5.2, warning=FALSE}
+all_equal(df_sqldf_5(Posts), df_dplyr_5(Posts))
+```
+
+3. data.table
+```{r all_equal_5.3, warning=FALSE}
+all_equal(df_sqldf_5(Posts), df_data_table_5(Posts))
+```
+
+### Porównanie czasu działania
+
+```{r microbenchmark_5, echo=FALSE}
+time_5.1 <- microbenchmark(
+  sql = df_sqldf_5(Posts),
+  base = df_base_5(Posts))
+time_5.2 <- microbenchmark(
+  dplyr = df_dplyr_5(Posts),
+  dt = df_data_table_5(Posts))
+time_5.1
+time_5.2
+``` 
+
+### Podsumowanie
+W większości zadań najszybciej działa kod napisany w data.table. W zadaniach od 2 do 5 najwolniejszy jest Base, szczególnie w zadaniu czwartym można zauważyć, że moje rozwiązanie jest nieoptymalne. SQL i dplyr mają czasy działania zazwyczaj pomiędzy Base i data.table. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
